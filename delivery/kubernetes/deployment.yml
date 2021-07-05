@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: Delivery
+  namespace: outerpark
   labels:
     app: Delivery
 spec:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
         - name: Delivery
-          image: username/Delivery:latest
+          image: user01skccacr.azureacr.io/Delivery:latest
           ports:
             - containerPort: 8080
           readinessProbe:

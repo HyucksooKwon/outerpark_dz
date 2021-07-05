@@ -38,36 +38,21 @@
 
 ## 1. 분석/설계
 
-### AS-IS 조직 (Horizontally-Aligned)
-  ![image](https://user-images.githubusercontent.com/82069747/122220242-1df27f00-ceeb-11eb-9810-6ba9a4a0d725.png)
-
-
-### TO-BE 조직 (Vertically-Aligned)
-  ![image](https://user-images.githubusercontent.com/82069747/122219980-e388e200-ceea-11eb-8bf0-658518de2f83.png)
-
-
 ### Event Storming 결과
-![489546E2-B902-49D4-A6AE-1F4C2BD0E6C2](https://user-images.githubusercontent.com/82069747/122322611-b414bc80-cf60-11eb-8cf9-feba63327fcf.jpeg)
-
-
-### 헥사고날 아키텍처 다이어그램 도출
-![1651DFF6-25E1-48E5-B9BB-D973DF77246C_4_5005_c](https://user-images.githubusercontent.com/82069747/122388677-11356000-cfab-11eb-94e2-e61b44f2c300.jpeg)
+![image](https://user-images.githubusercontent.com/84000853/124477763-5b0dab00-dddf-11eb-88ae-c92fbed439d0.png)
 
 
 ## 2. 구현
 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각각의 포트넘버는 8081 ~ 8085 이다)
 ```
-  cd musical
+  cd drama
   mvn spring-boot:run  
   
   cd reservation
   mvn spring-boot:run  
 
-  cd payment
+  cd delivery
   mvn spring-boot:run
-
-  cd notice
-  mvn spring-boot:run 
 
   cd customercenter
   mvn spring-boot:run  
@@ -80,10 +65,10 @@ msaez.io를 통해 구현한 Aggregate 단위로 Entity를 선언 후, 구현을
 
 Entity Pattern과 Repository Pattern을 적용하기 위해 Spring Data REST의 RestRepository를 적용하였다.
 
-**Musical 서비스의 musical.java**
+**Musical 서비스의 drama.java**
 
 ```java
-package outerpark;
+package outerparkdz;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
@@ -91,21 +76,21 @@ import java.util.List;
 import java.util.Date;
 
 @Entity
-@Table(name="Musical_table")
-public class Musical {
+@Table(name="Drama_table")
+public class Drama {
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    private Long musicalId;
+    private Long dramaId;
     private String name;
     private Integer reservableSeat;
 
     @PostPersist
     public void onPostPersist(){
-        MusicalRegistered musicalRegistered = new MusicalRegistered();
-        BeanUtils.copyProperties(this, musicalRegistered);
-        musicalRegistered.publishAfterCommit();
+        DramaRegistered dramaRegistered = new DramaRegistered();
+        BeanUtils.copyProperties(this, dramaRegistered);
+        dramaRegistered.publishAfterCommit();
     }
 
     @PostUpdate
@@ -122,12 +107,12 @@ public class Musical {
     public void setId(Long id) {
         this.id = id;
     }
-    public Long getMusicalId() {
-        return musicalId;
+    public Long getDramaId() {
+        return dramaId;
     }
 
-    public void setMusicalId(Long musicalId) {
-        this.musicalId = musicalId;
+    public void setDramaId(Long dramaId) {
+        this.dramaId = dramaId;
     }
     public String getName() {
         return name;
@@ -136,7 +121,7 @@ public class Musical {
     public void setName(String name) {
         this.name = name;
     }
-
+    
     public Integer getReservableSeat() {
         return reservableSeat;
     }
@@ -145,14 +130,15 @@ public class Musical {
         this.reservableSeat = reservableSeat;
     }
 }
+
 ```
 
-**Payment 서비스의 PolicyHandler.java**
+**Delivery 서비스의 PolicyHandler.java**
 
 ```java
-package outerpark;
+package outerparkdz;
 
-import outerpark.config.kafka.KafkaProcessor;
+import outerparkdz.config.kafka.KafkaProcessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -162,33 +148,33 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PolicyHandler{
-    @Autowired PaymentRepository paymentRepository;
+    @Autowired DeliveryRepository deliveryRepository;
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverReserved_ApprovePayment(@Payload Reserved reserved){
+    public void wheneverReserved_PrepareShip(@Payload Reserved reserved){
 
-        if (reserved.validate()) {
-            System.out.println("\n\n##### listener ApprovePayment : " + reserved.toJson() + "\n\n");
+        if(!reserved.validate()) return;
 
-            // Process payment
-            Payment payment = new Payment();
-            payment.setReservationId(reserved.getId());
-            payment.setStatus("PaymentApproved");
-            paymentRepository.save(payment);
-        }
+        System.out.println("\n\n##### listener PrepareShip : " + reserved.toJson() + "\n\n");
+
+        // Sample Logic //
+        Delivery delivery = new Delivery();
+        delivery.setReservationId(reserved.getId());
+        delivery.setStatus("ShipPrepared");
+        deliveryRepository.save(delivery);
     }
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverCanceled_CancelPayment(@Payload Canceled canceled){
+    public void wheneverCanceled_CanceledDelivery(@Payload Canceled canceled){
 
-        if(canceled.validate()) {
-            System.out.println("\n\n##### listener CancelPayment : " + canceled.toJson() + "\n\n");
+        if(!canceled.validate()) return;
 
-            // Cancel payment
-            Payment payment = paymentRepository.findByReservationId(canceled.getId());
-            payment.setStatus("PaymentCanceled");
-            paymentRepository.save(payment);
-        }
+        System.out.println("\n\n##### listener CanceledDelivery : " + canceled.toJson() + "\n\n");
+
+        // Cancel shipment
+        Delivery delivery = deliveryRepository.findByReservationId(canceled.getId());
+        delivery.setStatus("DeliveryCanceled");
+        deliveryRepository.save(delivery);
     }
 
     @StreamListener(KafkaProcessor.INPUT)
@@ -201,16 +187,16 @@ DDD 적용 후 REST API의 테스트를 통하여 정상적으로 동작하는 �
 
 
 ### 2.2. Polyglot Persistence 구조
-musical, payment, notice, customercenter 서비스는 H2 DB를 사용하게끔 구성되어 있고
+drama, delivery, customercenter 서비스는 H2 DB를 사용하게끔 구성되어 있고
 reservation 서비스는 HSQLDB 를 사용하도록 구성되어 있어서, DB 부분을 Polyglot 구조로 동작하도록 처리하였다.
 
 
-**musical 서비스의 pom.xml 내 DB 설정부분**
+**drama 서비스의 pom.xml 내 DB 설정부분**
 
 ![image](https://user-images.githubusercontent.com/84003381/122390349-db917680-cfac-11eb-9895-e8bb50b8c4e6.png)
 
 
-**musical 서비스 spring boot 기동 로그**
+**drama 서비스 spring boot 기동 로그**
 
 ![image](https://user-images.githubusercontent.com/84003381/122398314-ba348880-cfb4-11eb-9593-77770a8e27f8.png)
 
@@ -234,7 +220,7 @@ reservation 서비스는 HSQLDB 를 사용하도록 구성되어 있어서, DB �
 **gateway 테스트**
 
 ```
-http POST http://gateway:8080/musicals musicalId=1003 name=HOT reservableSeat=100000 
+http POST http://gateway:8080/dramas dramaId="1" name="LionKing" reservableSeat=100 
 ```
 
 ![image](https://user-images.githubusercontent.com/84000848/122344967-4b3e3c00-cf82-11eb-8bb1-9cd21999a6d3.png)
@@ -264,7 +250,7 @@ http POST http://gateway:8080/musicals musicalId=1003 name=HOT reservableSeat=10
 - 테스트 시나리오의 3.4 과 5.4 항목에 해당
 
 [Correlation]
-- 예약을 하게되면 reservation > payment > notice > MyPage로 주문이 Assigned 되고, 주문 취소가 되면 Status가 deliveryCancelled로 Update 되는 것을 볼 수 있다.
+- 예약을 하게되면 reservation > delivery > MyPage로 주문이 Assigned 되고, 주문 취소가 되면 Status가 deliveryCancelled로 Update 되는 것을 볼 수 있다.
 - 또한 Correlation Key를 구현하기 위해 각 마이크로서비스에서 관리하는 데이터의 Id값을 전달받아서 서비스간의 연관 처리를 수행하였다.
 - 이 결과로 서로 다른 마이크로 서비스 간에 트랜잭션이 묶여 있음을 알 수 있다.
 
@@ -388,7 +374,7 @@ kubectl get ns
 
 **소스가져오기**
 ```
-git clone https://github.com/hyucksookwon/outerpark.git
+git clone https://github.com/hyucksookwon/outerpark_dz.git
 ```
 
 
@@ -403,7 +389,7 @@ mvn package
 
 **도커라이징: Azure 레지스트리에 도커 이미지 빌드 후 푸시하기**
 ```
-az acr build --registry outerparkskacr --image outerparkskacr.azurecr.io/reservation:latest .
+az acr build --registry user01skccacr --image user01skccacr.azurecr.io/reservation:v1 .
 ```
 
 ![image](https://user-images.githubusercontent.com/84000848/122330874-e3cac100-cf6e-11eb-89bf-771e533c66ef.png)
@@ -414,7 +400,7 @@ az acr build --registry outerparkskacr --image outerparkskacr.azurecr.io/reserva
 
 **컨테이너라이징: 디플로이 생성 확인**
 ```
-kubectl create deploy reservation --image=outerparkskacr.azurecr.io/reservation:latest -n outerpark
+kubectl create deploy reservation --image=user01skccacr.azurecr.io/reservation:v1 -n outerpark
 kubectl get all -n outerpark
 ```
 
@@ -431,7 +417,7 @@ kubectl get all -n outerpark
 ![image](https://user-images.githubusercontent.com/84000848/122331656-2771fa80-cf70-11eb-8479-aa6cfe567981.png)
 
 
-**payment, musical, notice, customercenter, gateway에도 동일한 작업 반복**
+**drama, customercenter, gateway에도 동일한 작업 반복**
 *최종 결과
 
 ![image](https://user-images.githubusercontent.com/84000848/122349147-eafdc900-cf86-11eb-96bb-a50afe56ad58.png)
@@ -447,7 +433,7 @@ kubectl apply -f kubernetes/deployment.yml
 
 
 ### 3.2. 동기식 호출 / 서킷 브레이킹 / 장애격리
-- 시나리오는 예약(reservation)-->공연(musical) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 예약이 과도할 경우 CB 를 통하여 장애격리.
+- 시나리오는 예약(reservation)--> 연극공연(drama) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 예약이 과도할 경우 CB 를 통하여 장애격리.
 - Hystrix 설정: 요청처리 쓰레드에서 처리시간이 250 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
 
 

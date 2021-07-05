@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: delivery
-          image: user01skccacr.azureacr.io/delivery:latest
+          image: user01skccacr.azurecr.io/delivery:latest
           ports:
             - containerPort: 8080
           readinessProbe:

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: customercenter
-          image: user01skccacr.azureacr.io/customercenter:v1
+          image: user01skccacr.azureacr.io/customercenter:latest
           ports:
             - containerPort: 8080
           readinessProbe:

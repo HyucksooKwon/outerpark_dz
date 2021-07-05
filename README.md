@@ -215,17 +215,17 @@ reservation 서비스는 HSQLDB 를 사용하도록 구성되어 있어서, DB �
 ### 2.3. Gateway 적용
 
 **gateway > application.yml 설정**
-![image](https://user-images.githubusercontent.com/84000848/122344337-a6236380-cf81-11eb-83d9-98f2311b4f6a.png)
+![image](https://user-images.githubusercontent.com/84000853/124479799-97420b00-dde1-11eb-998b-67e522dd011c.png)
 
 **gateway 테스트**
 
 ```
-http POST http://gateway:8080/dramas dramaId="1" name="LionKing" reservableSeat=100 
+http POST http://gateway:8080/dramas dramaId="2" name="Frozen" reservableSeat=100 
 ```
 
-![image](https://user-images.githubusercontent.com/84000848/122344967-4b3e3c00-cf82-11eb-8bb1-9cd21999a6d3.png)
+![image](https://user-images.githubusercontent.com/84000853/124480332-1cc5bb00-dde2-11eb-9b08-845265e542f3.png)
 
-![image](https://user-images.githubusercontent.com/84000848/122345044-601acf80-cf82-11eb-8b79-14a11fdd838e.png)
+![image](https://user-images.githubusercontent.com/84000853/124480643-74fcbd00-dde2-11eb-92a6-34493d0624b3.png)
 
 
 ### 2.4. Saga, CQRS, Correlation, Req/Resp
@@ -233,9 +233,7 @@ http POST http://gateway:8080/dramas dramaId="1" name="LionKing" reservableSeat=
 뮤지컬 예약 시스템은 각 마이크로 서비스가 아래와 같은 기능으로 구성되어 있으며,
 마이크로 서비스간 통신은 기본적으로 Pub/Sub 을 통한 Event Driven 구조로 동작하도록 구성하였음.
 
-![image](https://user-images.githubusercontent.com/84003381/122408528-6da17b00-cfbd-11eb-9651-49f754758615.png)
-
-![image](https://user-images.githubusercontent.com/84003381/122410244-b574d200-cfbe-11eb-8b49-3dad0dafe79b.png)
+![image](https://user-images.githubusercontent.com/84000853/124481744-94481a00-dde3-11eb-97f1-6e6900baa9b2.png)
 
 
 <구현기능별 요약>
@@ -265,55 +263,45 @@ http POST http://gateway:8080/dramas dramaId="1" name="LionKing" reservableSeat=
 
 **<구현기능 점검을 위한 테스트 시나리오>**
 
-![image](https://user-images.githubusercontent.com/84003381/122501058-e4c32780-d02e-11eb-9ca7-5c2637c4480d.png)
+![image](https://user-images.githubusercontent.com/84000853/124524739-288f9c80-de37-11eb-8bf8-35cc67aa43b0.png)
 
 
-**1. MD가 뮤지컬 정보 등록**
+**1. MD가 연극 정보 등록**
 
-- http POST http://localhost:8081/musicals musicalId="1" name="Frozen" reservableSeat="100"
+- http POST http://localhost:8081/dramas darmaId="1" name="LionKing" reservableSeat="100"
 
 ![image](https://user-images.githubusercontent.com/84000853/122401028-316b1c00-cfb7-11eb-9f20-32f02f150fc9.png)
 
 
 
-**2. 사용자가 뮤지컬 예약**
+**2. 사용자가 연극 좌석 예약**
 
 2.1 정상예약 #1
 
-- http POST http://localhost:8082/reservations musicalId="1" seats="10" price="50000"
+- http POST http://localhost:8082/reservations dramaId="1" seats="10""
 
-2.2 정상예약 #2
 
-- http POST http://localhost:8082/reservations musicalId="1" seats="15" price="50000"
-
-![image](https://user-images.githubusercontent.com/84000853/122401281-6aa38c00-cfb7-11eb-82f1-e86f114466c5.png)
-
-2.3 MD가 관리하는 뮤지컬 정보상의 좌석수(잔여좌석수)를 초과한 예약 시도시에는 예약이 되지 않도록 처리함
+2.2 MD가 관리하는 정보상의 좌석수(잔여좌석수)를 초과한 예약 시도시에는 예약이 되지 않도록 처리함
 
 - FeignClient를 이용한 Req/Resp 연동
-- http POST http://localhost:8082/reservations musicalId="1" seats="200" price="50000"
+- http POST http://localhost:8082/reservations dramaId="1" seats="200"
 
 ![image](https://user-images.githubusercontent.com/84000853/122401363-7bec9880-cfb7-11eb-88b6-4fb3febc23f7.png)
 
 
 
-**3. 뮤지컬 예약 후, 각 마이크로 서비스내 Pub/Sub을 통해 변경된 데이터 확인**
+**3. 예약 완료 후, 각 마이크로 서비스내 Pub/Sub을 통해 변경된 데이터 확인**
 
-3.1 뮤지컬 정보 조회 (좌석수량 차감여부 확인)  --> 좌석수가 75로 줄어듦
+3.1 연극 정보 조회 (좌석수량 차감여부 확인)  --> 좌석수가 90으로 줄어듦
 - http GET http://localhost:8081/musicals/1
 ![image](https://user-images.githubusercontent.com/84000853/122401410-87d85a80-cfb7-11eb-96a2-a63c95ebba9d.png)
    
-3.2 요금결제 내역 조회     --> 2 Row 생성 : Reservation 생성 2건
+3.2 배송 준비 내역 조회     --> 1 Row 생성
 - http GET http://localhost:8083/payments
 ![image](https://user-images.githubusercontent.com/84000853/122401517-a50d2900-cfb7-11eb-814f-a8eb7789d8a6.png)
 
        
-3.3 알림 조회              --> 2 Row 생성 : PaymentApproved 생성 2건
-- http GET http://localhost:8084/notices
-![image](https://user-images.githubusercontent.com/84000853/122401559-af2f2780-cfb7-11eb-903e-faf850510de7.png)
-
-       
-3.4 마이페이지 조회        --> 2 Row 생성 : Reservation 생성 2건 후 > PaymentApproved 로 업데이트됨
+3.3 마이페이지 조회        --> 2 Row 생성 : Reservation 생성 2건 후 > PaymentApproved 로 업데이트됨
 - http GET http://localhost:8085/myPages
 ![image](https://user-images.githubusercontent.com/84000853/122401619-bb1ae980-cfb7-11eb-874c-af75fc0fde93.png)
 
@@ -328,7 +316,7 @@ http POST http://gateway:8080/dramas dramaId="1" name="LionKing" reservableSeat=
 ![image](https://user-images.githubusercontent.com/84000853/122401687-c837d880-cfb7-11eb-983f-7b653ebe25da.png)
 
    
-4.2 취소내역 확인 (#2만 남음)
+4.2 취소내역 확인
 
 - http GET http://localhost:8082/reservations
 
@@ -338,7 +326,7 @@ http POST http://gateway:8080/dramas dramaId="1" name="LionKing" reservableSeat=
 
 **5. 뮤지컬 예약 취소 후, 각 마이크로 서비스내 Pub/Sub을 통해 변경된 데이터 확인**
 
-5.1 뮤지컬 정보 조회 (좌석수량 증가여부 확인)  --> 좌석수가 85로 늘어남
+5.1 뮤지컬 정보 조회 (좌석수량 증가여부 확인)  --> 좌석수가 100으로 늘어남
 - http GET http://localhost:8081/musicals/1
 ![image](https://user-images.githubusercontent.com/84000853/122401785-e1408980-cfb7-11eb-95f9-31487e09c955.png)
 
@@ -376,7 +364,6 @@ kubectl get ns
 ```
 git clone https://github.com/hyucksookwon/outerpark_dz.git
 ```
-
 
 ![image](https://user-images.githubusercontent.com/84000848/122329826-0a87f800-cf6d-11eb-927a-688f208fab5a.png)
 
@@ -477,6 +464,7 @@ siege -c100 -t60S -r10 -v --content-type "application/json" 'http://reservation:
 
 
 ### 3.3. Autoscale(HPA)
+
 - 오토스케일 테스트를 위해 리소스 제한설정 함
 - reservation/kubernetes/deployment.yml 설정
 
@@ -528,7 +516,6 @@ kubectl get deploy reservation -w -n outerpark
 ### 3.4. Self-healing (Liveness Probe)
 
 - musical 서비스 정상 확인
-
 
 ![image](https://user-images.githubusercontent.com/84000848/122398259-adb03000-cfb4-11eb-9f49-5cf7018b81d4.png)
 
@@ -628,5 +615,4 @@ kubectl get pod/reservation-57d8f8c4fd-74csz -n outerpark -o yaml | kubectl repl
 ![image](https://user-images.githubusercontent.com/84000848/122423447-e3f7aa80-cfc8-11eb-8760-6df5eb08f039.png)
 
 ![image](https://user-images.githubusercontent.com/84000848/122423364-d3dfcb00-cfc8-11eb-8b35-9145c00659b9.png)
-
 

@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Date;
 
-@FeignClient(name="drama", url="http://localhost:8081")
-//@FeignClient(name="drama", url="${api.url.drama}")
+//@FeignClient(name="drama", url="http://localhost:8081")
+@FeignClient(name="drama", url="${api.url.drama}")
 public interface DramaService {
 
     @RequestMapping(method= RequestMethod.GET, path="/chkAndModifySeat")

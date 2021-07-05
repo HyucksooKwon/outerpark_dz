@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: reservation
+  namespace: outerpark
   labels:
     app: reservation
 spec:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
         - name: reservation
-          image: username/reservation:latest
+          image: user01skccacr.azureacr.io/reservation:latest
           ports:
             - containerPort: 8080
           readinessProbe:

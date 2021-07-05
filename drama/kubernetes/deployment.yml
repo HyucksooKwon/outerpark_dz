@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: drama
-          image: user01skccacr.azureacr.io/drama:latest
+          image: user01skccacr.azurecr.io/drama:latest
           ports:
             - containerPort: 8080
           readinessProbe:

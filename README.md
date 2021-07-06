@@ -270,7 +270,7 @@ http POST http://gateway:8080/dramas dramaId="2" name="Frozen" reservableSeat=10
 
 - http POST http://localhost:8081/dramas darmaId="1" name="LionKing" reservableSeat="100"
 
-![image](https://user-images.githubusercontent.com/84000853/122401028-316b1c00-cfb7-11eb-9f20-32f02f150fc9.png)
+![image](https://user-images.githubusercontent.com/84000853/124538785-2ccbb200-de57-11eb-9b64-18f6873f8d47.png)
 
 
 
@@ -286,24 +286,25 @@ http POST http://gateway:8080/dramas dramaId="2" name="Frozen" reservableSeat=10
 - FeignClient를 이용한 Req/Resp 연동
 - http POST http://localhost:8082/reservations dramaId="1" seats="200"
 
-![image](https://user-images.githubusercontent.com/84000853/122401363-7bec9880-cfb7-11eb-88b6-4fb3febc23f7.png)
+![image](https://user-images.githubusercontent.com/84000853/124538876-57b60600-de57-11eb-8151-009ca4a3669b.png)
 
 
 
 **3. 예약 완료 후, 각 마이크로 서비스내 Pub/Sub을 통해 변경된 데이터 확인**
 
 3.1 연극 정보 조회 (좌석수량 차감여부 확인)  --> 좌석수가 90으로 줄어듦
-- http GET http://localhost:8081/musicals/1
-![image](https://user-images.githubusercontent.com/84000853/122401410-87d85a80-cfb7-11eb-96a2-a63c95ebba9d.png)
+- http GET http://localhost:8081/dramas/1
+![image](https://user-images.githubusercontent.com/84000853/124539115-ca26e600-de57-11eb-93fb-3c0d77541ee3.png)
+
    
 3.2 배송 준비 내역 조회     --> 1 Row 생성
-- http GET http://localhost:8083/payments
-![image](https://user-images.githubusercontent.com/84000853/122401517-a50d2900-cfb7-11eb-814f-a8eb7789d8a6.png)
+- http GET http://localhost:8082/deliveries
+![image](https://user-images.githubusercontent.com/84000853/124539133-d317b780-de57-11eb-9122-7d6de57e314b.png)
 
        
-3.3 마이페이지 조회        --> 2 Row 생성 : Reservation 생성 2건 후 > PaymentApproved 로 업데이트됨
-- http GET http://localhost:8085/myPages
-![image](https://user-images.githubusercontent.com/84000853/122401619-bb1ae980-cfb7-11eb-874c-af75fc0fde93.png)
+3.3 마이페이지 조회        --> SeatReserved 로 업데이트됨
+- http GET http://localhost:8045/myPages
+![image](https://user-images.githubusercontent.com/84000853/124539146-db6ff280-de57-11eb-93b8-8836519af437.png)
 
 
 
@@ -313,14 +314,14 @@ http POST http://gateway:8080/dramas dramaId="2" name="Frozen" reservableSeat=10
 
 - http DELETE http://localhost:8082/reservations/1
 
-![image](https://user-images.githubusercontent.com/84000853/122401687-c837d880-cfb7-11eb-983f-7b653ebe25da.png)
+![image](https://user-images.githubusercontent.com/84000853/124539205-f7739400-de57-11eb-9863-f556198da009.png)
 
    
 4.2 취소내역 확인
 
 - http GET http://localhost:8082/reservations
 
-![image](https://user-images.githubusercontent.com/84000853/122401728-d128aa00-cfb7-11eb-9eb1-9b08498328ea.png)
+![image](https://user-images.githubusercontent.com/84000853/124539217-ff333880-de57-11eb-9c71-86579c3bae6f.png)
 
 
 
@@ -328,17 +329,15 @@ http POST http://gateway:8080/dramas dramaId="2" name="Frozen" reservableSeat=10
 
 5.1 연극 정보 조회 (좌석수량 증가여부 확인)  --> 좌석수가 100으로 늘어남
 - http GET http://localhost:8081/dramas/1
-![image](https://user-images.githubusercontent.com/84000853/122401785-e1408980-cfb7-11eb-95f9-31487e09c955.png)
+![image](https://user-images.githubusercontent.com/84000853/124539231-05291980-de58-11eb-8a07-2e26e4e7c9eb.png)
 
 5.2 배송 준비 내역 조회    --> 1번 예약에 대한 배송건이 DeliveryCancelled 로 변경됨 (UPDATE)
 - http GET http://localhost:8083/deveries
-![image](https://user-images.githubusercontent.com/84000853/122401809-e69dd400-cfb7-11eb-8216-8fb55d87c36f.png)
+![image](https://user-images.githubusercontent.com/84000853/124539246-0c502780-de58-11eb-8e34-466bfd1bce7e.png)
 
 5.3 마이페이지 조회       --> 1 Row 추가 생성 : DeliveryCancelled 생성 1건
 - http GET http://localhost:8084/myPages
-![image](https://user-images.githubusercontent.com/84000853/122401898-f87f7700-cfb7-11eb-86ee-7e5b7ce2d814.png)
-
-       
+![image](https://user-images.githubusercontent.com/84000853/124539259-12460880-de58-11eb-9737-f1015cc63bd7.png)
 
 
 

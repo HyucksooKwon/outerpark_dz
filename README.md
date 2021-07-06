@@ -357,7 +357,7 @@ kubectl create ns outerpark
 kubectl get ns
 ```
 
-![image](https://user-images.githubusercontent.com/84000848/122322035-c4786780-cf5f-11eb-904f-48d96217d2a1.png)
+![image](https://user-images.githubusercontent.com/84000853/124527422-78269600-de40-11eb-8d7e-915fc52ac313.png)
 
 
 **소스가져오기**
@@ -365,46 +365,46 @@ kubectl get ns
 git clone https://github.com/hyucksookwon/outerpark_dz.git
 ```
 
-![image](https://user-images.githubusercontent.com/84000848/122329826-0a87f800-cf6d-11eb-927a-688f208fab5a.png)
+![image](https://user-images.githubusercontent.com/84000853/124527480-9be9dc00-de40-11eb-9942-af3cefe49b0a.png)
 
 **빌드하기**
 ```
-cd outerpark/reservation
+cd outerpark_dz/drama
 mvn package
 ```
-![image](https://user-images.githubusercontent.com/84000848/122330314-eb3d9a80-cf6d-11eb-82cd-8faf7b0c1de7.png)
+![image](https://user-images.githubusercontent.com/84000853/124527605-fb47ec00-de40-11eb-9606-a1c91c556072.png)
 
 **도커라이징: Azure 레지스트리에 도커 이미지 빌드 후 푸시하기**
 ```
-az acr build --registry user01skccacr --image user01skccacr.azurecr.io/reservation:v1 .
+az acr build --registry user01skccacr --image user01skccacr.azurecr.io/drama:v1 .
 ```
 
-![image](https://user-images.githubusercontent.com/84000848/122330874-e3cac100-cf6e-11eb-89bf-771e533c66ef.png)
+![image](https://user-images.githubusercontent.com/84000853/124527863-ab1d5980-de41-11eb-8f3b-165f901c5345.png)
 
-![image](https://user-images.githubusercontent.com/84000848/122330924-f513cd80-cf6e-11eb-9c72-0562a27eabcd.png)
+![image](https://user-images.githubusercontent.com/84000853/124527884-bb353900-de41-11eb-90a9-f389b8753835.png)
 
-![image](https://user-images.githubusercontent.com/84000848/122331422-c2b6a000-cf6f-11eb-8c6d-88820b5c0e20.png)
+![image](https://user-images.githubusercontent.com/84000853/124527911-cc7e4580-de41-11eb-89a6-a27688d370df.png)
 
 **컨테이너라이징: 디플로이 생성 확인**
 ```
-kubectl create deploy reservation --image=user01skccacr.azurecr.io/reservation:v1 -n outerpark
+kubectl create deploy drama --image=user01skccacr.azurecr.io/drama:v1 -n outerpark
 kubectl get all -n outerpark
 ```
 
-![image](https://user-images.githubusercontent.com/84000848/122331554-fb567980-cf6f-11eb-83ac-9578bd657c1c.png)
+![image](https://user-images.githubusercontent.com/84000853/124528098-4c0c1480-de42-11eb-9712-3f5dd33ff7e1.png)
 
 
 **컨테이너라이징: 서비스 생성 확인**
 
 ```
-kubectl expose deploy reservation --type="ClusterIP" --port=8080 -n outerpark
+kubectl expose deploy drama --type="ClusterIP" --port=8080 -n outerpark
 kubectl get all -n outerpark
 ```
 
-![image](https://user-images.githubusercontent.com/84000848/122331656-2771fa80-cf70-11eb-8479-aa6cfe567981.png)
+![image](https://user-images.githubusercontent.com/84000853/124528203-968d9100-de42-11eb-880e-9e789b1c798b.png)
 
 
-**drama, customercenter, gateway에도 동일한 작업 반복**
+**reservation, customercenter, gateway에도 동일한 작업 반복**
 *최종 결과
 
 ![image](https://user-images.githubusercontent.com/84000848/122349147-eafdc900-cf86-11eb-96bb-a50afe56ad58.png)

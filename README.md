@@ -324,22 +324,18 @@ http POST http://gateway:8080/dramas dramaId="2" name="Frozen" reservableSeat=10
 
 
 
-**5. 뮤지컬 예약 취소 후, 각 마이크로 서비스내 Pub/Sub을 통해 변경된 데이터 확인**
+**5. 예약 취소 후, 각 마이크로 서비스내 Pub/Sub을 통해 변경된 데이터 확인**
 
-5.1 뮤지컬 정보 조회 (좌석수량 증가여부 확인)  --> 좌석수가 100으로 늘어남
-- http GET http://localhost:8081/musicals/1
+5.1 연극 정보 조회 (좌석수량 증가여부 확인)  --> 좌석수가 100으로 늘어남
+- http GET http://localhost:8081/dramas/1
 ![image](https://user-images.githubusercontent.com/84000853/122401785-e1408980-cfb7-11eb-95f9-31487e09c955.png)
 
-5.2 요금결제 내역 조회    --> 1번 예약에 대한 결제건이 paymentCancelled 로 변경됨 (UPDATE)
-- http GET http://localhost:8083/payments
+5.2 배송 준비 내역 조회    --> 1번 예약에 대한 배송건이 DeliveryCancelled 로 변경됨 (UPDATE)
+- http GET http://localhost:8083/deveries
 ![image](https://user-images.githubusercontent.com/84000853/122401809-e69dd400-cfb7-11eb-8216-8fb55d87c36f.png)
 
-5.3 알림 조회             --> 1번 예약에 대한 예약취소건이 paymentCancelled 로 1 row 추가됨 (INSERT)
-- http GET http://localhost:8084/notices
-![image](https://user-images.githubusercontent.com/84000853/122401844-eef60f00-cfb7-11eb-8303-52bd835137ce.png)
-
-5.4 마이페이지 조회       --> 1 Row 추가 생성 : PaymentCancelled 생성 1건
-- http GET http://localhost:8085/myPages
+5.3 마이페이지 조회       --> 1 Row 추가 생성 : DeliveryCancelled 생성 1건
+- http GET http://localhost:8084/myPages
 ![image](https://user-images.githubusercontent.com/84000853/122401898-f87f7700-cfb7-11eb-86ee-7e5b7ce2d814.png)
 
        
@@ -407,7 +403,7 @@ kubectl get all -n outerpark
 **reservation, customercenter, gateway에도 동일한 작업 반복**
 *최종 결과
 
-![image](https://user-images.githubusercontent.com/84000848/122349147-eafdc900-cf86-11eb-96bb-a50afe56ad58.png)
+![image](https://user-images.githubusercontent.com/84000853/124528938-6b0ba600-de44-11eb-812e-bee17979c985.png)
 
 - deployment.yml을 사용하여 배포 (reservation의 deployment.yml 추가)
 
@@ -448,9 +444,9 @@ kubectl exec -it pod/siege-d484db9c-9dkgd -c siege -n outerpark -- /bin/bash
 
 
 ```
-siege -c100 -t60S -r10 -v --content-type "application/json" 'http://reservation:8080/reservations POST {"musicalId": "1003", "seats":1}'
+siege -c100 -t60S -r10 -v --content-type "application/json" 'http://reservation:8080/reservations POST {"dramaId": "1", "seats":1}'
 ```
-- 부하 발생하여 CB가 발동하여 요청 실패처리하였고, 밀린 부하가 musical에서 처리되면서 다시 reservation 받기 시작
+- 부하 발생하여 CB가 발동하여 요청 실패처리하였고, 밀린 부하가 drama에서 처리되면서 다시 reservation 받기 시작
 
 
 ![image](https://user-images.githubusercontent.com/84000848/122355980-52b71280-cf8d-11eb-9d48-d9848d7189bc.png)
@@ -515,12 +511,12 @@ kubectl get deploy reservation -w -n outerpark
 
 ### 3.4. Self-healing (Liveness Probe)
 
-- musical 서비스 정상 확인
+- drama 서비스 정상 확인
 
 ![image](https://user-images.githubusercontent.com/84000848/122398259-adb03000-cfb4-11eb-9f49-5cf7018b81d4.png)
 
 
-- musical의 deployment.yml 에 Liveness Probe 옵션 변경하여 계속 실패하여 재기동 되도록 yml 수정
+- drama의 deployment.yml 에 Liveness Probe 옵션 변경하여 계속 실패하여 재기동 되도록 yml 수정
 ```
           livenessProbe:
             tcpSocket:
@@ -530,7 +526,7 @@ kubectl get deploy reservation -w -n outerpark
 ```
 ![image](https://user-images.githubusercontent.com/84000848/122398788-2dd69580-cfb5-11eb-91ce-bc82d7cf66a1.png)
 
--musical pod에 liveness가 적용된 부분 확인
+-drama pod에 liveness가 적용된 부분 확인
 
 ![image](https://user-images.githubusercontent.com/84000848/122400529-c4578680-cfb6-11eb-8d06-a54f37ced872.png)
 
@@ -560,8 +556,8 @@ kubectl apply -f kubernetes/deployment.yml
 -새로운 버전의 이미지로 교체
 
 ```
-az acr build --registry outerparkskacr --image outerparkskacr.azurecr.io/reservation:v3 .
-kubectl set image deploy reservation reservation=outerparkskacr.azurecr.io/reservation:v3 -n outerpark
+az acr build --registry outerparkskacr --image user01skccacr.azurecr.io/reservation:v3 .
+kubectl set image deploy reservation reservation=user01skccacr.azurecr.io/reservation:v3 -n outerpark
 ```
 
 -기존 버전과 새 버전의 reservation pod 공존 중
@@ -589,7 +585,7 @@ Deployment.yml 설정
 
 config map 생성 후 조회
 ```
-kubectl create configmap apiurl --from-literal=url=http://musical:8080 -n outerpark
+kubectl create configmap apiurl --from-literal=url=http://drama:8080 -n outerpark
 ```
 
 ![image](https://user-images.githubusercontent.com/84000848/122423850-346f0800-cfc9-11eb-90d8-9cb6c55bec21.png)

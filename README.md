@@ -591,7 +591,7 @@ kubectl create configmap apiurl --from-literal=url=http://drama:8080 -n outerpar
 
 - 설정한 url로 주문 호출
 ```
-http POST http://reservation:8080/reservations musicalId=1001 seats=10
+http POST http://reservation:8080/reservations dramaId=1 seats=10
 ```
 ![image](https://user-images.githubusercontent.com/84000848/122424027-5a94a800-cfc9-11eb-8fa9-363b80e6b899.png)
 

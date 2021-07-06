@@ -268,7 +268,7 @@ http POST http://gateway:8080/dramas dramaId="2" name="Frozen" reservableSeat=10
 
 **1. MD가 연극 정보 등록**
 
-- http POST http://localhost:8081/dramas darmaId="1" name="LionKing" reservableSeat="100"
+- http POST http://localhost:8081/dramas drmaId="1" name="LionKing" reservableSeat="100"
 
 ![image](https://user-images.githubusercontent.com/84000853/124538785-2ccbb200-de57-11eb-9b64-18f6873f8d47.png)
 
